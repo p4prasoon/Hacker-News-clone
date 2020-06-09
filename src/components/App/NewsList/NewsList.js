@@ -120,7 +120,7 @@ export default class NewsList extends React.Component {
     }
     this.setState({ page: page });
     axios
-      .get("http://hn.algolia.com/api/v1/search?page=" + page)
+      .get("https://hn.algolia.com/api/v1/search?page=" + page)
       .then((res) => {
         let data = res.data;
         console.log(data.hits);
