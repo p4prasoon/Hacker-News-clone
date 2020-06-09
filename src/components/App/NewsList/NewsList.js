@@ -32,13 +32,13 @@ export default class NewsList extends React.Component {
     Allnews.find((ele) => {
       return ele.objectID == _id;
     }).voteCount = details.voteCount;
-    console.log(Allnews);
+    // console.log(Allnews);
 
     this.setState({ news: Allnews });
   };
   hideFeed = (_id) => {
     debugger;
-    let Allnews = this.state.news;
+    let Allnews = [...this.state.news];
     let details = localStorage.getItem(_id)
       ? JSON.parse(localStorage.getItem(_id))
       : { voteCount: 0, hide: false };
@@ -50,32 +50,14 @@ export default class NewsList extends React.Component {
     Allnews.find((ele) => {
       return ele.objectID == _id;
     }).hide = true;
-    console.log(Allnews);
+
+    Allnews = Allnews.filter((elem) => !elem.hide);
 
     this.setState({ news: Allnews });
   };
 
   componentDidMount() {
     this.paginate();
-
-    this.data = [
-      { name: "Page A", uv: 400, pv: 2400, amt: 2400 },
-      { name: "Page B", uv: 800, pv: 2400, amt: 2400 },
-    ];
-
-    // axios.get("http://hn.algolia.com/api/v1/search").then((res) => {
-    //   let data = res.data;
-    //   console.log(data.hits);
-    //   for (let i = 0, len = data["hits"].length; i < len; i++) {
-    //     let details = localStorage.getItem(data["hits"][i]["objectID"])
-    //       ? JSON.parse(localStorage.getItem(data["hits"][i]["objectID"]))
-    //       : { voteCount: 0, hide: false };
-
-    //     data["hits"][i].voteCount = details.voteCount;
-    //     data["hits"][i].hide = details.hide;
-    //   }
-    //   this.setState({ news: res.data["hits"] || [] });
-    // });
   }
   constructRows(story) {
     let flag = story.hide;
@@ -100,7 +82,7 @@ export default class NewsList extends React.Component {
               {/* {new Date(new Date().getTime() - story.created_at_i)} */}
             </span>
             <span
-              style={{ marginLeft: "5px" }}
+              style={{ marginLeft: "5px", cursor: "pointer" }}
               onClick={() => this.hideFeed(story.objectID)}
             >
               [hide]
@@ -119,11 +101,11 @@ export default class NewsList extends React.Component {
       page -= 1;
     }
     this.setState({ page: page });
-    axios
-      .get("https://hn.algolia.com/api/v1/search?page=" + page)
-      .then((res) => {
-        let data = res.data;
-        console.log(data.hits);
+    axios.get("https://hn.algolia.com/api/v1/search?page=" + page).then(
+      (res) => {
+        let data = res.data || [],
+          newState = [];
+
         for (let i = 0, len = data["hits"].length; i < len; i++) {
           let details = localStorage.getItem(data["hits"][i]["objectID"])
             ? JSON.parse(localStorage.getItem(data["hits"][i]["objectID"]))
@@ -131,9 +113,16 @@ export default class NewsList extends React.Component {
 
           data["hits"][i].voteCount = details.voteCount;
           data["hits"][i].hide = details.hide;
+          if (data["hits"][i].hide == false) {
+            newState.push(data["hits"][i]);
+          }
         }
-        this.setState({ news: res.data["hits"] || [] });
-      });
+        this.setState({ news: newState });
+      },
+      (err) => {
+        console.error("Error in Fetching Response: ", err);
+      }
+    );
   }
 
   render() {
